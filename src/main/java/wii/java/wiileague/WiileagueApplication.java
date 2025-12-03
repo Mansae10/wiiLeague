@@ -7,7 +7,8 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @ComponentScan(basePackages= {"wii.java.wiileague.model", 
                                "wii.java.wiileague.repository", 
-                               "wii.java.wiileague.controller"})
+                               "wii.java.wiileague.controller",
+							"wii.java.wiileague.service"})
 public class WiileagueApplication {
 
 	public static void main(String[] args) {
