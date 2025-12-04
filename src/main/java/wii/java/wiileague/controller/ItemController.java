@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.JsonNode;
 import wii.java.wiileague.model.Item;
 import wii.java.wiileague.repository.ItemRepository;
+import wii.java.wiileague.service.ItemSync;
 import wii.java.wiileague.service.RiotApiService;
 
 
@@ -25,16 +26,22 @@ public class ItemController {
     
     private final RiotApiService riotApiService;
     private final ItemRepository itemRepository;
+    private final ItemSync itemSync;
 
-    public ItemController(RiotApiService riotApiService, ItemRepository itemRepository){
-        this.riotApiService = riotApiService;
-        this.itemRepository = itemRepository;
-
+    public ItemController(RiotApiService riotApiService, ItemRepository itemRepository, ItemSync itemSync) {
+    this.riotApiService = riotApiService;
+    this.itemRepository = itemRepository;
+    this.itemSync = itemSync;
     }
 
     @GetMapping("/riot")
     public Mono<JsonNode> getItemsFromRiot() {
         return riotApiService.getItemData();
+    }
+
+    @PostMapping("/sync")
+    public String syncItems() {
+        return itemSync.syncAllItems();
     }
 
     @PostMapping

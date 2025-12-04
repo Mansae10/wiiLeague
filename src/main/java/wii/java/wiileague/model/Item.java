@@ -12,7 +12,7 @@ public class Item {
     private int itemId;
     private String name;
     private String description;
-    private int gold;
+    private Gold gold;
     private List<String> tags;
     private Stats stats;
 
@@ -30,8 +30,8 @@ public class Item {
     public String getDescription() {return description;}
     public void setDescription(String description) {this.description = description;}
 
-    public int getGold() {return gold;}
-    public void setGold(int gold) {this.gold = gold;}
+    public Gold getGold() {return gold;}
+    public void setGold(Gold gold) {this.gold = gold;}
 
     public List<String> getTags() {return tags;}
     public void setTags(List<String> tags) {this.tags = tags;}
@@ -128,4 +128,26 @@ public class Item {
         public void setTenacity(int tenacity) {this.tenacity = tenacity;}
 
     }
+    public static class Gold {
+        private int base;
+        private int total;
+        private int sell;
+        private boolean purchasable;
+
+        public Gold() {}
+
+        public int getBase() {return base;}
+        public void setBase(int base) {this.base = base;}
+
+        public int getTotal() {return total;}
+        public void setTotal(int total) {this.total = total;}
+
+        public int getSell() {return sell;}
+        public void setSell(int sell) {this.sell = sell;}
+
+        public boolean isPurchasable() {return purchasable;}
+        public void setPurchasable(boolean purchasable) {this.purchasable = purchasable;}
+    }
+
+
 }

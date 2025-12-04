@@ -20,7 +20,7 @@ public class Champion {
     private List<Spell> spells;
     private Passive passive;
     private List<Skin> skins;
-    private int difficulty;
+    private Info info;
 
     private Image image;
 
@@ -49,8 +49,8 @@ public class Champion {
     public Stats getStats() {return stats;}
     public void setStats(Stats stats) {this.stats = stats;}
 
-    public int getDifficulty() {return difficulty;}
-    public void setDifficulty(int difficulty) { this.difficulty = difficulty;}
+    public Info getInfo() {return info;}
+    public void setInfo(Info info) { this.info = info;}
 
     public List<Spell> getSpells() {return spells;}
 
@@ -198,6 +198,28 @@ public class Champion {
         public Image getImage() {return image;}
         public void setImage(Image image) {this.image = image;}
         
+    }
+
+    public static class Info {
+        private int attack;
+        private int defense;
+        private int magic;
+        private int difficulty;
+
+        public Info() {
+        }
+
+        public int getAttack() {return attack;}
+        public void setAttack(int attack) {this.attack = attack;}
+
+        public int getDefense() {return defense;}
+        public void setDefense(int defense) {this.defense = defense;}
+
+        public int getMagic() { return magic;}
+        public void setMagic(int magic) {this.magic = magic;}
+
+        public int getDifficulty() {return difficulty;}
+        public void setDifficulty(int difficulty) {this.difficulty = difficulty;}
     }
 
     

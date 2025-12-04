@@ -17,6 +17,7 @@ import tools.jackson.databind.JsonNode;
 import wii.java.wiileague.model.Summoner;
 import wii.java.wiileague.repository.SummonerRepository;
 import wii.java.wiileague.service.RiotApiService;
+import wii.java.wiileague.service.SummonerSync;
 
 
 
@@ -27,16 +28,30 @@ public class SummonerController {
     
     private final RiotApiService riotApiService;
     private final SummonerRepository summonerRepository;
+    private final SummonerSync summonerSync;
 
-    public SummonerController(RiotApiService riotApiService, SummonerRepository summonerRepository){
+    public SummonerController(RiotApiService riotApiService, 
+                              SummonerRepository summonerRepository,
+                              SummonerSync summonerSync) {
         this.riotApiService = riotApiService;
         this.summonerRepository = summonerRepository;
+        this.summonerSync = summonerSync;
     }
 
     @GetMapping("/riot/{summonerName}")
     public Mono<JsonNode> getSummonerFromRiot(@PathVariable String summonerName) {
         return riotApiService.getSummonerByName(summonerName);
     }
+
+    @PostMapping("/sync/{summonerName}")
+    public Summoner syncSummoner(@PathVariable String summonerName) {
+        return summonerSync.syncSummonerByName(summonerName);
+}
+
+    @PostMapping("/sync/multiple")
+    public String syncMultipleSummoners(@RequestBody List<String> summonerNames) {
+        return summonerSync.syncMultipleSummoners(summonerNames.toArray(new String[0]));
+}
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
