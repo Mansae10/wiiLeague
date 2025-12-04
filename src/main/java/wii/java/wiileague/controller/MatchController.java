@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.JsonNode;
 import wii.java.wiileague.model.Match;
 import wii.java.wiileague.repository.MatchRepository;
+import wii.java.wiileague.service.MatchSync;
 import wii.java.wiileague.service.RiotApiService;
 
 
@@ -27,11 +28,18 @@ public class MatchController {
 
     private final RiotApiService riotApiService;
     private final MatchRepository matchRepository;
+    private final MatchSync matchSync;
 
-    public MatchController(RiotApiService riotApiService, MatchRepository matchRepository) {
+    public MatchController(RiotApiService riotApiService, MatchRepository matchRepository, MatchSync matchSync) {
         this.riotApiService = riotApiService;
         this.matchRepository = matchRepository;
+        this.matchSync = matchSync;
     }
+
+    @PostMapping("/sync/{puuid}")
+    public String syncMatches(@PathVariable String puuid, @RequestParam(defaultValue = "5") int count) {
+        return matchSync.syncMatchesByPuuid(puuid, count);
+}
 
     @GetMapping("/riot/{puuid}")
     public Mono<JsonNode> getMatchIdsFromRiot(@PathVariable String puuid, @RequestParam(defaultValue = "5") int count) {
