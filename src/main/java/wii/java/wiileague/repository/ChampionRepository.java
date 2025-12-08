@@ -19,7 +19,7 @@ public interface ChampionRepository extends MongoRepository<Champion, String>{
 
     List<Champion> findByTagsIn(List<String> tags);
 
-    List<Champion> findByDifficulty(int difficulty);
+    List<Champion> findByInfoDifficulty(int difficulty);
 
     List<Champion> findByNameContainingIgnoreCase(String name);
 
