@@ -21,6 +21,56 @@ public class SummonerSync {
         
     }
 
+    public Summoner syncSummonerByRiotId(String riotId) {
+        try {
+            String[] parts = riotId.split("#");
+            if(parts.length != 2) {
+                System.err.println("ERROR: Invalid Riot ID format. Use: gameName#tagLine");
+                return null;
+            }
+            
+            String gameName = parts[0];
+            String tagLine = parts[1];
+
+            System.out.println("=== Syncing summoner: " + riotId + " ===");
+
+            JsonNode accountResponse = riotApiService.getAccountByRiotId(gameName, tagLine).block();
+
+            if(accountResponse == null) {
+                System.err.println("ERROR: No account found for " + riotId);
+                return null;
+            }
+
+            String puuid = accountResponse.get("puuid").asText();
+            System.out.println("Found PUUID: " + puuid);
+
+            JsonNode summonerResponse = riotApiService.getSummonerByPuuid(puuid).block();
+
+            if(summonerResponse == null) {
+                System.err.println("ERROR: No summoner data found for PUUID " + puuid);
+                return null;
+            }
+
+            Summoner summoner = objectMapper.treeToValue(accountResponse, Summoner.class);
+
+            summoner.setName(riotId);
+
+            summonerRepository.findByPuuid(summoner.getPuuid()).ifPresent(existing -> {
+                summoner.setId(existing.getId());
+            });
+
+            Summoner saved = summonerRepository.save(summoner);
+            System.out.println("Synced summoner: " + saved.getName() + " (Level " + saved.getSummonerLevel());
+
+            return saved;
+
+        } catch (Exception e) {
+            System.err.println("Error syncing summoner " + riotId + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public Summoner syncSummonerByName(String summonerName) {
         try {
             System.out.println("=== Syncing summoner: " + summonerName + " ===");

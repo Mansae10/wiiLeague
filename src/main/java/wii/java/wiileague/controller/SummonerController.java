@@ -38,6 +38,12 @@ public class SummonerController {
         this.summonerSync = summonerSync;
     }
 
+    @PostMapping("/sync/riotid/{gameName}/{tagLine}")
+    public Summoner syncByRiotId(@PathVariable String gameName, @PathVariable String tagLine) {
+        return summonerSync.syncSummonerByRiotId(gameName + "#" + tagLine);
+    }
+    
+
     @GetMapping("/riot/{summonerName}")
     public Mono<JsonNode> getSummonerFromRiot(@PathVariable String summonerName) {
         return riotApiService.getSummonerByName(summonerName);

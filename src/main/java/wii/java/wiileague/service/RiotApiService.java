@@ -30,6 +30,16 @@ public class RiotApiService {
         .build();
 }
 
+    public Mono<JsonNode> getAccountByRiotId(String gameName, String tagLine) {
+        String url = AMERICAS_API_BASE + "/riot/account/v1/accounts/by-riot-id/" + gameName + "/" + tagLine;
+        return webClient.get().uri(url).header(TOKEN, apiKey).retrieve().bodyToMono(JsonNode.class);
+    }
+
+    public Mono<JsonNode> getSummonerByPuuid(String puuid) {
+        String url = RIOT_API_BASE + "/lol/summoner/v4/summoners/by-puuid/" + puuid;
+        return webClient.get().uri(url).header(TOKEN, apiKey).retrieve().bodyToMono(JsonNode.class);
+    }
+
     public Mono<JsonNode> getSummonerByName(String summonerName) {
         String url = RIOT_API_BASE + "/lol/summoner/v4/summoners/by-name/" + summonerName;
         return webClient.get().uri(url).header(TOKEN, apiKey).retrieve().bodyToMono(JsonNode.class);
