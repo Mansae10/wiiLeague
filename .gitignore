@@ -35,4 +35,6 @@ build/
 ### Credentials ###
 application-local.properties
 application-dev.yml
+src/main/resources/application.properties
+
 env.properties
