@@ -14,5 +14,11 @@ public interface ItemRepository extends MongoRepository<Item, String> {
     List<Item> findByTagsIn(String tag);
     
     List<Item> findByNameContainingIgnoreCase(String name);
+
+    List<Item> findByGoldTotalLessThan(int maxGold);
+
+    List<Item> findByGoldTotalBetween(int minGold, int maxGold);
+
+    List<Item> findByGoldGreaterThan(int minGold);
     
 } 
