@@ -1,15 +1,15 @@
 package wii.java.wiileague.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import reactor.core.publisher.Mono;
@@ -22,62 +22,74 @@ import wii.java.wiileague.service.SummonerSync;
 
 
 
+
 @RestController
 @RequestMapping("/api/summoners")
 public class SummonerController {
     
-    private final RiotApiService riotApiService;
     private final SummonerRepository summonerRepository;
     private final SummonerSync summonerSync;
+    private final RiotApiService riotApiService;
 
-    public SummonerController(RiotApiService riotApiService, 
-                              SummonerRepository summonerRepository,
-                              SummonerSync summonerSync) {
-        this.riotApiService = riotApiService;
+    public SummonerController(SummonerRepository summonerRepository,
+                              SummonerSync summonerSync,
+                              RiotApiService riotApiService) {
         this.summonerRepository = summonerRepository;
         this.summonerSync = summonerSync;
+        this.riotApiService = riotApiService;
     }
 
     @PostMapping("/sync/riotid/{gameName}/{tagLine}")
-    public Summoner syncByRiotId(@PathVariable String gameName, @PathVariable String tagLine) {
-        return summonerSync.syncSummonerByRiotId(gameName + "#" + tagLine);
+    public ResponseEntity<Summoner> syncByRiotId(@PathVariable String gameName, 
+                                                  @PathVariable String tagLine) {
+        Summoner summoner = summonerSync.syncSummonerByRiotId(gameName + "#" + tagLine);
+        
+        if (summoner == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
+        return ResponseEntity.ok(summoner);
     }
-    
-
-    @GetMapping("/riot/{summonerName}")
-    public Mono<JsonNode> getSummonerFromRiot(@PathVariable String summonerName) {
-        return riotApiService.getSummonerByName(summonerName);
-    }
-
-    @PostMapping("/sync/{summonerName}")
-    public Summoner syncSummoner(@PathVariable String summonerName) {
-        return summonerSync.syncSummonerByName(summonerName);
-}
 
     @PostMapping("/sync/multiple")
-    public String syncMultipleSummoners(@RequestBody List<String> summonerNames) {
-        return summonerSync.syncMultipleSummoners(summonerNames.toArray(new String[0]));
-}
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Summoner createSummoner(@RequestBody Summoner summoner) {
-        return summonerRepository.save(summoner);
+    public String syncMultipleSummoners(@RequestBody List<String> riotIds) {
+        return summonerSync.syncMultipleSummoners(riotIds.toArray(new String[0]));
     }
 
+    @GetMapping("/riotid/{gameName}/{tagLine}")
+    public ResponseEntity<Summoner> getSummonerByRiotId(@PathVariable String gameName, 
+                                                         @PathVariable String tagLine) {
+        Summoner summoner = summonerSync.getSummoner(gameName, tagLine);
+        
+        if (summoner == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        
+        return ResponseEntity.ok(summoner);
+    }
+
+    @GetMapping("/puuid/{puuid}")
+    public ResponseEntity<Summoner> getSummonerByPuuid(@PathVariable String puuid) {
+        return summonerRepository.findByPuuid(puuid)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @GetMapping("/name/{name}")
+    public ResponseEntity<Summoner> getSummonerByName(@PathVariable String name) {
+        return summonerRepository.findByName(name)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }
+    
     @GetMapping
     public List<Summoner> getAllSummoners() {
         return summonerRepository.findAll();
     }
 
-    @GetMapping("/{id}")
-    public Optional<Summoner> getSummonerById(@PathVariable String id) {
-        return summonerRepository.findById(id);
+    @GetMapping("/puuid/{puuid}/matches")
+    public Mono<JsonNode> getMatchIds(@PathVariable String puuid,
+                                      @RequestParam(defaultValue = "20") int count) {
+        return riotApiService.getMatchIdsByPuuid(puuid, count);
     }
-
-    @GetMapping("/name/{name}")
-    public Optional<Summoner> getSummonerByName(@PathVariable String name) {
-        return summonerRepository.findByName(name);
-    }   
-    
 }

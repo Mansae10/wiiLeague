@@ -1,5 +1,8 @@
 package wii.java.wiileague.service;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.JsonNode;
@@ -51,13 +54,24 @@ public class SummonerSync {
                 return null;
             }
 
-            Summoner summoner = objectMapper.treeToValue(accountResponse, Summoner.class);
+            System.out.println("Summoner Response: " + summonerResponse.toString());
+            
 
-            summoner.setName(riotId);
+            Summoner summoner = summonerRepository.findByGameNameAndTagLine(gameName, tagLine).orElse(new Summoner());
 
-            summonerRepository.findByPuuid(summoner.getPuuid()).ifPresent(existing -> {
-                summoner.setId(existing.getId());
-            });
+            summoner.setGameName(gameName);
+            summoner.setTagLine(tagLine);
+            summoner.setPuuid(puuid);
+            summoner.setProfileIconId(summonerResponse.get("profileIconId").asInt());
+            summoner.setSummonerLevel(summonerResponse.get("summonerLevel").asLong());
+            summoner.setLastUpdated(LocalDateTime.now());
+
+            if(summonerResponse.has("name")){
+                summoner.setName(summonerResponse.get("name").asText());
+                summoner.setName(gameName + "#" + tagLine);
+            }else {
+                System.err.println("WARNING: 'name' field not found in summoner response");
+            }
 
             Summoner saved = summonerRepository.save(summoner);
             System.out.println("Synced summoner: " + saved.getName() + " (Level " + saved.getSummonerLevel());
@@ -71,47 +85,41 @@ public class SummonerSync {
         }
     }
 
-    public Summoner syncSummonerByName(String summonerName) {
-        try {
-            System.out.println("=== Syncing summoner: " + summonerName + " ===");
-
-            JsonNode response = riotApiService.getSummonerByName(summonerName).block();
-
-            if(response == null) {
-                System.out.println("ERROR: No response from Riot API");
-                return null;
-            }
-
-            Summoner summoner = objectMapper.treeToValue(response, Summoner.class);
-
-            summonerRepository.findByPuuid(summoner.getPuuid()).ifPresent(existing -> {
-                summoner.setId(existing.getId());
-            });
-
-            Summoner saved = summonerRepository.save(summoner);
-            System.out.println("Synced summoner: " + saved.getName() + " (Level " + saved.getSummonerLevel() + ")");
-
-            return saved;
-        }catch(Exception e) {
-            System.err.println("Error syncing summoner " + summonerName + ": " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public String syncMultipleSummoners(String... summonerNames){
+    public String syncMultipleSummoners(String... riotIds) {
         int synced = 0;
         int failed = 0;
 
-        for(String name : summonerNames) {
-            Summoner result = syncSummonerByName(name);
-            if(result != null){
+        for (String riotId : riotIds) {
+            Summoner result = syncSummonerByRiotId(riotId);
+            if (result != null) {
                 synced++;
-            }else{
+            } else {
                 failed++;
             }
         }
 
         return "Successfully synced " + synced + " summoners (failed: " + failed + ")";
+    }
+
+    public Summoner getSummoner(String gameName, String tagLine) {
+        Optional<Summoner> existing = summonerRepository.findByGameNameAndTagLine(gameName, tagLine);
+
+        if(existing.isPresent()) {
+            Summoner summoner = existing.get();
+
+            if(summoner.getLastUpdated() != null && 
+               summoner.getLastUpdated().isBefore(LocalDateTime.now().minusHours(1))) {
+                System.out.println("Data is stale, refreshing...");
+                return syncSummonerByRiotId(gameName + "#" + tagLine);
+            }
+
+            return summoner;
+        }
+
+        return syncSummonerByRiotId(gameName + "#" + tagLine);
+    }
+
+    public Summoner getSummonerByPuuid(String puuid) {
+        return summonerRepository.findByPuuid(puuid).orElse(null);
     }
 }

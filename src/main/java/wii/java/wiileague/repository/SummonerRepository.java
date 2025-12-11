@@ -8,10 +8,11 @@ import wii.java.wiileague.model.Summoner;
 
 public interface SummonerRepository extends MongoRepository<Summoner, String> {
 
-    Optional<Summoner> findByPuuid(String puuid);
+    Optional<Summoner> findByGameNameAndTagLine(String gameName, String tagLine);
 
+    Optional<Summoner> findByPuuid(String puuid);
+    
     Optional<Summoner> findByName(String name);
 
-    Optional<Summoner> findBySummonerId(String summonerId);
     
 }
