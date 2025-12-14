@@ -12,7 +12,4 @@ public interface SummonerRepository extends MongoRepository<Summoner, String> {
 
     Optional<Summoner> findByPuuid(String puuid);
     
-    Optional<Summoner> findByName(String name);
-
-    
 }

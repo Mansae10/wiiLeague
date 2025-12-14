@@ -66,15 +66,9 @@ public class SummonerSync {
             summoner.setSummonerLevel(summonerResponse.get("summonerLevel").asLong());
             summoner.setLastUpdated(LocalDateTime.now());
 
-            if(summonerResponse.has("name")){
-                summoner.setName(summonerResponse.get("name").asText());
-                summoner.setName(gameName + "#" + tagLine);
-            }else {
-                System.err.println("WARNING: 'name' field not found in summoner response");
-            }
 
             Summoner saved = summonerRepository.save(summoner);
-            System.out.println("Synced summoner: " + saved.getName() + " (Level " + saved.getSummonerLevel());
+            System.out.println("Synced summoner: " + saved.getGameName() + "#" + saved.getTagLine() + " (Level " + saved.getSummonerLevel());
 
             return saved;
 

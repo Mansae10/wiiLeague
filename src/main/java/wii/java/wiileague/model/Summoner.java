@@ -13,8 +13,7 @@ public class Summoner {
     private String puuid;  
     private String gameName;
     private String tagLine;
-    
-    private String name;  
+     
     private int profileIconId;
     private long summonerLevel;
 
@@ -33,9 +32,6 @@ public class Summoner {
 
     public String getTagLine() { return tagLine; }
     public void setTagLine(String tagLine) { this.tagLine = tagLine; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
 
     public int getProfileIconId() { return profileIconId; }
     public void setProfileIconId(int profileIconId) { this.profileIconId = profileIconId; }
