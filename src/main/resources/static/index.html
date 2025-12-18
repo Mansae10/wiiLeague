@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiiLeague Stats Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        .btn-primary {
+            background: #2563eb;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .win-border {
+            border-left: 4px solid #22c55e;
+            background: rgba(34, 197, 94, 0.05);
+        }
+        .loss-border {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <div class="bg-slate-900/50 backdrop-blur-sm border-b border-blue-500/20">
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                        <h1 class="text-3xl font-bold text-white">WiiLeague</h1>
+                    </div>
+                    <button id="newSearchBtn" class="hidden px-4 py-2 btn-primary text-white rounded-lg">
+                        New Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Search View -->
+            <div id="searchView" class="max-w-2xl mx-auto">
+                <div class="card rounded-xl p-8">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold text-white mb-2">Search Summoner</h2>
+                        <p class="text-slate-400">Enter your Riot ID to view stats</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                id="gameName"
+                                placeholder="Game Name"
+                                class="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                            />
+                            <input
+                                type="text"
+                                id="tagLine"
+                                placeholder="Tag"
+                                class="w-32 px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                            />
+                        </div>
+
+                        <button
+                            id="searchBtn"
+                            class="w-full px-6 py-3 btn-primary text-white rounded-lg font-semibold flex items-center justify-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Search
+                        </button>
+
+                        <div id="errorMsg" class="hidden p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm"></div>
+
+                        <div class="pt-4 text-center text-slate-400 text-sm">
+                            Example: <span class="text-blue-400">Poggers#help</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profileView" class="hidden space-y-6">
+                <!-- Summoner Card -->
+                <div class="card rounded-xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold text-white">
+                                    <span id="displayGameName"></span>
+                                    <span class="text-slate-400">#<span id="displayTagLine"></span></span>
+                                </h2>
+                                <p class="text-slate-400">Level <span id="displayLevel"></span></p>
+                            </div>
+                        </div>
+                        
+                        <button
+                            id="syncMatchesBtn"
+                            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold flex items-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            Sync Matches
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Match History -->
+                <div class="card rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                            </svg>
+                            Match History
+                        </h3>
+                        <button
+                            id="refreshMatchesBtn"
+                            class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center gap-2"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div id="matchesContainer">
+                        <div class="text-center py-12 text-slate-400">
+                            <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p>No matches found. Click "Sync Matches" to load match history.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        let currentSummoner = null;
+        let currentMatches = [];
+
+        // Elements
+        const searchView = document.getElementById('searchView');
+        const profileView = document.getElementById('profileView');
+        const newSearchBtn = document.getElementById('newSearchBtn');
+        const searchBtn = document.getElementById('searchBtn');
+        const syncMatchesBtn = document.getElementById('syncMatchesBtn');
+        const refreshMatchesBtn = document.getElementById('refreshMatchesBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const matchesContainer = document.getElementById('matchesContainer');
+
+        // Event Listeners
+        searchBtn.addEventListener('click', searchSummoner);
+        syncMatchesBtn.addEventListener('click', () => syncMatches(20));
+        refreshMatchesBtn.addEventListener('click', loadMatches);
+        newSearchBtn.addEventListener('click', resetToSearch);
+
+        document.getElementById('gameName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchSummoner();
+        });
+        document.getElementById('tagLine').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchSummoner();
+        });
+
+        async function searchSummoner() {
+            const gameName = document.getElementById('gameName').value.trim();
+            const tagLine = document.getElementById('tagLine').value.trim();
+
+            if (!gameName || !tagLine) {
+                showError('Please enter both game name and tag line');
+                return;
+            }
+
+            setLoading(searchBtn, true);
+            hideError();
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/summoners/sync/riotid/${gameName}/${tagLine}`,
+                    { method: 'POST' }
+                );
+
+                if (!response.ok) throw new Error('Failed to sync summoner');
+
+                const data = await response.json();
+                currentSummoner = data;
+                showProfile();
+            } catch (err) {
+                showError('Failed to load summoner. Make sure the name and tag are correct.');
+                console.error(err);
+            } finally {
+                setLoading(searchBtn, false);
+            }
+        }
+
+        async function syncMatches(count = 20) {
+            if (!currentSummoner) return;
+
+            setLoading(syncMatchesBtn, true);
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/matches/sync/riotid/${currentSummoner.gameName}/${currentSummoner.tagLine}?count=${count}`,
+                    { method: 'POST' }
+                );
+
+                if (!response.ok) throw new Error('Failed to sync matches');
+
+                await loadMatches();
+            } catch (err) {
+                showError('Failed to sync matches');
+                console.error(err);
+            } finally {
+                setLoading(syncMatchesBtn, false);
+            }
+        }
+
+        async function loadMatches() {
+            if (!currentSummoner) return;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/matches/history/riotid/${currentSummoner.gameName}/${currentSummoner.tagLine}`
+                );
+
+                if (!response.ok) throw new Error('Failed to load matches');
+
+                currentMatches = await response.json();
+                displayMatches();
+            } catch (err) {
+                console.error('Failed to load matches:', err);
+            }
+        }
+
+        function displayMatches() {
+            if (currentMatches.length === 0) {
+                matchesContainer.innerHTML = `
+                    <div class="text-center py-12 text-slate-400">
+                        <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>No matches found. Click "Sync Matches" to load match history.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            matchesContainer.innerHTML = currentMatches.map((match, index) => {
+                const playerStats = match.participants?.find(p => p.puuid === currentSummoner.puuid);
+                if (!playerStats) return '';
+
+                const isWin = playerStats.win;
+                const kda = playerStats.deaths === 0 ? 'Perfect' : 
+                    ((playerStats.kills + playerStats.assists) / playerStats.deaths).toFixed(2);
+
+                return `
+                    <div class="${isWin ? 'win-border' : 'loss-border'} rounded-lg mb-3 overflow-hidden">
+                        <div class="p-4 cursor-pointer hover:bg-white/5" onclick="toggleMatch(${index})">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div>
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="px-3 py-1 rounded text-sm font-bold ${isWin ? 'bg-green-500' : 'bg-red-500'} text-white">
+                                                ${isWin ? 'VICTORY' : 'DEFEAT'}
+                                            </span>
+                                            <span class="text-slate-400 text-sm">${match.gameMode || 'Unknown'}</span>
+                                        </div>
+                                        <div class="flex items-center gap-4 text-white">
+                                            <span class="font-bold">${playerStats.championName || 'Unknown'}</span>
+                                            <span class="text-lg font-bold">${playerStats.kills}/${playerStats.deaths}/${playerStats.assists}</span>
+                                            <span class="text-slate-400 text-sm">KDA: ${kda}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-slate-400 text-sm">${formatDuration(match.gameDuration)}</div>
+                                    <div class="text-slate-500 text-xs mt-1">${formatDate(match.gameCreation)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="match-${index}" class="hidden border-t border-slate-700 p-4 bg-slate-900/50">
+                            <h4 class="text-white font-semibold mb-3">All Players</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                ${match.participants?.map(p => `
+                                    <div class="p-3 rounded border ${p.puuid === currentSummoner.puuid ? 'border-blue-500 bg-blue-500/10' : 'border-slate-700 bg-slate-800/50'}">
+                                        <div class="flex items-start gap-3">
+                                            <!-- Champion Image -->
+                                            <div class="flex-shrink-0">
+                                                <img 
+                                                    src="https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/${p.championName || 'Aatrox'}.png" 
+                                                    alt="${p.championName}"
+                                                    class="w-12 h-12 rounded border-2 ${p.win ? 'border-green-500' : 'border-red-500'}"
+                                                    onerror="this.src='https://ddragon.leagueoflegends.com/cdn/14.23.1/img/champion/Aatrox.png'"
+                                                />
+                                                <div class="text-center text-xs text-white mt-1 font-bold">
+                                                    ${p.champLevel || '?'}
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex-1">
+                                                <!-- Summoner Name -->
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <span class="text-white font-medium text-sm">
+                                                        ${p.riotIdGameName || p.summonerName || 'Unknown'}${p.riotIdTagline ? '#' + p.riotIdTagline : ''}
+                                                        ${p.puuid === currentSummoner.puuid ? '<span class="ml-2 text-blue-400 text-xs">(You)</span>' : ''}
+                                                    </span>
+                                                    <span class="text-xs ${p.win ? 'text-green-400' : 'text-red-400'}">
+                                                        ${p.win ? 'Win' : 'Loss'}
+                                                    </span>
+                                                </div>
+                                                
+                                                <!-- Champion Name -->
+                                                <div class="text-slate-400 text-xs mb-2">${p.championName || 'Unknown'}</div>
+                                                
+                                                <!-- KDA -->
+                                                <div class="text-white text-sm font-bold mb-2">
+                                                    ${p.kills}/${p.deaths}/${p.assists}
+                                                </div>
+                                                
+                                                <!-- Items -->
+                                                <div class="flex gap-1">
+                                                    ${[p.item0, p.item1, p.item2, p.item3, p.item4, p.item5, p.item6].map((itemId, idx) => `
+                                                        ${itemId && itemId > 0 ? `
+                                                            <img 
+                                                                src="https://ddragon.leagueoflegends.com/cdn/14.23.1/img/item/${itemId}.png"
+                                                                alt="Item ${itemId}"
+                                                                class="w-6 h-6 rounded border border-slate-600"
+                                                                onerror="this.style.display='none'"
+                                                                title="Item ${itemId}"
+                                                            />
+                                                        ` : `<div class="w-6 h-6 rounded border border-slate-700 bg-slate-800"></div>`}
+                                                    `).join('')}
+                                                </div>
+                                                
+                                                <!-- Stats -->
+                                                ${p.goldEarned || p.totalMinionsKilled ? `
+                                                    <div class="text-xs text-slate-400 mt-2 space-y-1">
+                                                        ${p.goldEarned ? `<div>💰 ${(p.goldEarned / 1000).toFixed(1)}k gold</div>` : ''}
+                                                        ${p.totalMinionsKilled ? `<div>🗡️ ${p.totalMinionsKilled + (p.neutralMinionsKilled || 0)} CS</div>` : ''}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('') || ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleMatch(index) {
+            const element = document.getElementById(`match-${index}`);
+            element.classList.toggle('hidden');
+        }
+
+        function showProfile() {
+            document.getElementById('displayGameName').textContent = currentSummoner.gameName;
+            document.getElementById('displayTagLine').textContent = currentSummoner.tagLine;
+            document.getElementById('displayLevel').textContent = currentSummoner.summonerLevel;
+
+            searchView.classList.add('hidden');
+            profileView.classList.remove('hidden');
+            newSearchBtn.classList.remove('hidden');
+        }
+
+        function resetToSearch() {
+            currentSummoner = null;
+            currentMatches = [];
+            document.getElementById('gameName').value = '';
+            document.getElementById('tagLine').value = '';
+            
+            profileView.classList.add('hidden');
+            searchView.classList.remove('hidden');
+            newSearchBtn.classList.add('hidden');
+        }
+
+        function setLoading(button, isLoading) {
+            if (isLoading) {
+                button.disabled = true;
+                button.innerHTML = `
+                    <svg class="w-5 h-5 spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Loading...
+                `;
+            } else {
+                button.disabled = false;
+                // Restore original content based on button
+                if (button === searchBtn) {
+                    button.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Search
+                    `;
+                } else if (button === syncMatchesBtn) {
+                    button.innerHTML = `
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        Sync Matches
+                    `;
+                }
+            }
+        }
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMsg.classList.add('hidden');
+        }
+
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatDate(timestamp) {
+            return new Date(timestamp).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>

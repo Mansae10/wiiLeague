@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +23,6 @@ import wii.java.wiileague.repository.MatchRepository;
 import wii.java.wiileague.repository.SummonerRepository;
 import wii.java.wiileague.service.MatchSync;
 import wii.java.wiileague.service.RiotApiService;
-
-
 
 @RestController
 @RequestMapping("/api/matches")
@@ -52,17 +51,13 @@ public class MatchController {
         return matchSync.syncMatchesByRiotId(gameName + "#" + tagLine, count);
     }
 
-    /**
-     * Sync matches by PUUID
-     * POST /api/matches/sync/puuid/{puuid}?count=20
-     */
+
     @PostMapping("/sync/puuid/{puuid}")
     public String syncMatchesByPuuid(@PathVariable String puuid, 
                                      @RequestParam(defaultValue = "20") int count) {
         return matchSync.syncMatchesByPuuid(puuid, count);
     }
 
-    // Keep your old endpoint for backwards compatibility
     @PostMapping("/sync/{puuid}")
     public String syncMatches(@PathVariable String puuid, 
                               @RequestParam(defaultValue = "5") int count) {
@@ -73,25 +68,32 @@ public class MatchController {
     @GetMapping("/history/riotid/{gameName}/{tagLine}")
     public ResponseEntity<List<Match>> getMatchHistoryByRiotId(@PathVariable String gameName,
                                                                 @PathVariable String tagLine) {
-        List<Match> matches = matchSync.getMatchHistoryByRiotId(gameName, tagLine);
+        Summoner summoner = summonerRepository
+            .findByGameNameAndTagLine(gameName, tagLine)
+            .orElse(null);
         
-        if (matches.isEmpty()) {
-            Summoner summoner = summonerRepository
-                .findByGameNameAndTagLine(gameName, tagLine)
-                .orElse(null);
-            
-            if (summoner == null) {
-                return ResponseEntity.notFound().build();
-            }
+        if (summoner == null) {
+            return ResponseEntity.notFound().build();
         }
+        
+        List<Match> matches = matchRepository.findAll().stream()
+            .filter(match -> match.getParticipants() != null &&
+                   match.getParticipants().stream()
+                       .anyMatch(p -> summoner.getPuuid().equals(p.getPuuid())))
+            .toList();
         
         return ResponseEntity.ok(matches);
     }
 
     @GetMapping("/history/puuid/{puuid}")
     public List<Match> getMatchHistoryByPuuid(@PathVariable String puuid) {
-        return matchSync.getMatchHistoryByPuuid(puuid);
+        return matchRepository.findAll().stream()
+            .filter(match -> match.getParticipants() != null &&
+                   match.getParticipants().stream()
+                       .anyMatch(p -> puuid.equals(p.getPuuid())))
+            .toList();
     }
+
 
     @GetMapping
     public List<Match> getAllMatches() {
@@ -110,9 +112,27 @@ public class MatchController {
             .orElse(ResponseEntity.notFound().build());
     }
 
+
     @GetMapping("/mode/{gameMode}")
     public List<Match> getMatchesByGameMode(@PathVariable String gameMode) {
         return matchRepository.findByGameMode(gameMode);
+    }
+
+    @DeleteMapping("/clear")
+    public String clearAllMatches() {
+        long count = matchRepository.count();
+        matchRepository.deleteAll();
+        return "Deleted " + count + " matches";
+    }
+
+    @DeleteMapping("/matchid/{matchId}")
+    public ResponseEntity<String> deleteMatchByMatchId(@PathVariable String matchId) {
+        Optional<Match> match = matchRepository.findByMatchId(matchId);
+        if (match.isPresent()) {
+            matchRepository.delete(match.get());
+            return ResponseEntity.ok("Deleted match: " + matchId);
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/riot/puuid/{puuid}")

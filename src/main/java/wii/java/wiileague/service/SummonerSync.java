@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import wii.java.wiileague.model.Summoner;
 import wii.java.wiileague.repository.SummonerRepository;
 
@@ -14,14 +13,11 @@ import wii.java.wiileague.repository.SummonerRepository;
 public class SummonerSync {
     private final RiotApiService riotApiService;
     private final SummonerRepository summonerRepository;
-    private final ObjectMapper objectMapper;
 
-    public SummonerSync(RiotApiService riotApiService, SummonerRepository summonerRepository, ObjectMapper objectMapper) {
+    public SummonerSync(RiotApiService riotApiService, SummonerRepository summonerRepository) {
 
         this.riotApiService = riotApiService;
-        this.summonerRepository = summonerRepository;
-        this.objectMapper = objectMapper;
-        
+        this.summonerRepository = summonerRepository;        
     }
 
     public Summoner syncSummonerByRiotId(String riotId) {

@@ -75,13 +75,6 @@ public class SummonerController {
             .orElse(ResponseEntity.notFound().build());
     }
     
-    @GetMapping("/name/{name}")
-    public ResponseEntity<Summoner> getSummonerByName(@PathVariable String name) {
-        return summonerRepository.findByName(name)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
-    
     @GetMapping
     public List<Summoner> getAllSummoners() {
         return summonerRepository.findAll();
