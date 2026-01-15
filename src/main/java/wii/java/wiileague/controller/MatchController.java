@@ -77,10 +77,11 @@ public class MatchController {
         }
         
         List<Match> matches = matchRepository.findAll().stream()
-            .filter(match -> match.getParticipants() != null &&
-                   match.getParticipants().stream()
-                       .anyMatch(p -> summoner.getPuuid().equals(p.getPuuid())))
-            .toList();
+        .filter(match -> match.getParticipants() != null &&
+               match.getParticipants().stream()
+                   .anyMatch(p -> summoner.getPuuid().equals(p.getPuuid())))
+        .sorted((m1, m2) -> Long.compare(m2.getGameCreation(), m1.getGameCreation()))
+        .toList();
         
         return ResponseEntity.ok(matches);
     }
@@ -88,10 +89,11 @@ public class MatchController {
     @GetMapping("/history/puuid/{puuid}")
     public List<Match> getMatchHistoryByPuuid(@PathVariable String puuid) {
         return matchRepository.findAll().stream()
-            .filter(match -> match.getParticipants() != null &&
-                   match.getParticipants().stream()
-                       .anyMatch(p -> puuid.equals(p.getPuuid())))
-            .toList();
+        .filter(match -> match.getParticipants() != null &&
+               match.getParticipants().stream()
+                   .anyMatch(p -> puuid.equals(p.getPuuid())))
+        .sorted((m1, m2) -> Long.compare(m2.getGameCreation(), m1.getGameCreation()))
+        .toList();
     }
 
 
